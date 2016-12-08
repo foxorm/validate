@@ -1,0 +1,23 @@
+{
+    "name": "foxorm/validate",
+    "type": "library",
+    "require": {
+        "respect/validation": "^1.1",
+    },
+    "suggest": {
+        "foxorm/gibberish-detector": "Determines if text contains gibberish"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "jo",
+            "email": "jo@surikat.pro"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "FoxORM\\Validate\\": "src"
+        }
+    }
+}
