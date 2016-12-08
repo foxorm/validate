@@ -13,7 +13,7 @@ class Validate{
 		$validator = new Validator();
 		return $validator->addRule($this->buildRule($ruleSpec, $arguments));
 	}
-	function buildRule($ruleSpec, $arguments = []){
+	protected function buildRule($ruleSpec, $arguments = []){
         try {
             return $this->factory->rule($ruleSpec, $arguments);
         }
