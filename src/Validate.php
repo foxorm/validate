@@ -1,8 +1,7 @@
 <?php
 namespace FoxORM\Validate;
-use Respect\Validation\Validator;
 use Respect\Validation\Factory;
-use Respect\Validation\Exceptions\ComponentException;
+use FoxORM\Validate\RuleSet;
 class Validate{
 	protected $factory;
 	function __construct(){
@@ -10,15 +9,12 @@ class Validate{
 		$this->factory->prependRulePrefix(__NAMESPACE__.'\\Rules');
 	}
 	function __call($method, $arguments){
-		$validator = new Validator();
-		return $validator->addRule($this->buildRule($ruleSpec, $arguments));
+		return call_user_func_array([$this->createRule(),$method],$arguments);
 	}
-	protected function buildRule($ruleSpec, $arguments = []){
-        try {
-            return $this->factory->rule($ruleSpec, $arguments);
-        }
-        catch (\Exception $exception) {
-            throw new ComponentException($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
+	function createRule(){
+		return new RuleSet($this->factory);
+	}
+	function getFactory(){
+		return $this->factory;
+	}
 }
