@@ -39,9 +39,9 @@ class RuleSet extends AllOf{
 			foreach($rules as $ruleArray){
 				$name = array_shift($ruleArray);
 				if(is_array($name)){
-					foreach($name as $nestedRule){
-						$ruleObject = $this->buildRule($name, $ruleArray);
-						$ruleArray = $ruleObject;
+					foreach(array_reverse($name) as $nestedRule){
+						$ruleObject = $this->buildRule($nestedRule, $ruleArray);
+						$ruleArray = [$ruleObject];
 					}
 				}
 				else{
