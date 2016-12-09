@@ -37,7 +37,7 @@ class RuleSet extends AllOf{
 			if(is_string($rules)){
 				$rules = $this->extractStringParamArray($rules);
 			}
-			$mandatory = in_array(['required'],$rules);
+			$mandatory = false;
 			foreach($rules as $ruleArray){
 				if(is_string($ruleArray)){
 					$ruleArray = $this->extractStringParam($ruleArray);
