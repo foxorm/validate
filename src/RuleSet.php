@@ -38,10 +38,16 @@ class RuleSet extends AllOf{
 				$rules = $this->extractStringParamArray($rules);
 			}
 			$mandatory = false;
-			foreach($rules as $ruleArray){
+			foreach($rules as $i=>$ruleArray){
 				if(is_string($ruleArray)){
-					$ruleArray = $this->extractStringParam($ruleArray);
+					$rules[$i] = $ruleArray = $this->extractStringParam($ruleArray);
 				}
+				if($ruleArray==['required']){
+					$mandatory = true;
+					unset($rules[$i]);
+				}
+			}
+			foreach($rules as $ruleArray){
 				$name = array_shift($ruleArray);
 				if(is_array($name)){
 					foreach(array_reverse($name) as $nestedRule){
