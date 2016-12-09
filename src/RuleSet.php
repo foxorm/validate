@@ -1,10 +1,12 @@
 <?php
 namespace FoxORM\Validate;
 use FoxORM\Validate\Validate;
+use FoxORM\Validate\StringParamTrait;
 use Respect\Validation\Rules\AllOf;
 use Respect\Validation\Factory;
 use Respect\Validation\Exceptions\ComponentException;
 class RuleSet extends AllOf{
+	use StringParamTrait;
 	protected $validate;
 	function __construct(Validate $validate, $ruleSet=null){
 		$this->validate = $validate;
