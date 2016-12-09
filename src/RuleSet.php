@@ -1,10 +1,12 @@
 <?php
 namespace FoxORM\Validate;
 use FoxORM\Validate\Ruler;
+use FoxORM\Validate\StringParamTrait;
 use Respect\Validation\Rules\AllOf;
 use Respect\Validation\Factory;
 use Respect\Validation\Exceptions\ComponentException;
 class RuleSet extends AllOf{
+	use StringParamTrait;
 	protected $validate;
 	function __construct(Ruler $validate, $ruleSet=null){
 		$this->validate = $validate;
@@ -58,46 +60,5 @@ class RuleSet extends AllOf{
 			}
 		}
 		return $this;
-	}
-	
-	protected function extractStringParam($rule){
-		$params = explode(':',$rule);
-		$name = array_shift($params);
-		if(strpos($name,'(')){
-			$name = $this->extractRecursiveNestedFunction($name);
-		}
-		array_unshift($params,$name);
-		return $params;
-	}
-	protected function extractStringParamArray($str){
-		$x = explode('|',$str);
-		$rules = [];
-		foreach($x as $rule){
-			$rules[] = $this->extractStringParam($rule);
-		}
-		return $rules;
-	}
-	protected function extractRecursiveNestedFunction($str){
-		$depth = 0;
-		$len = strlen($str);
-		$seq = [];
-		for($i = 0; $i < $len; $i++){
-			$char = $str[$i];
-			switch($char){
-				case '(':
-					$depth++;
-				break;
-				case ')':
-					$depth--;
-				break;
-				default:
-					if(!isset($seq[$depth])){
-						$seq[$depth] = '';
-					}
-					$seq[$depth] .= $char;
-				break;
-			}
-		}
-		return $seq;
 	}
 }
