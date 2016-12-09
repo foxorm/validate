@@ -2,8 +2,8 @@
 namespace FoxORM\Validate\Rules;
 use Respect\Validation\Rules\AbstractRule;
 class NotEquals extends AbstractRule{
-	protected $compareTo;
-	protected $strict;
+	public $compareTo;
+	public $strict;
     function __construct($compareTo,$strict=false){
 		$this->compareTo = $compareTo;
 		$this->strict = $strict;

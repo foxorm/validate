@@ -2,8 +2,8 @@
 namespace FoxORM\Validate\Rules;
 use Respect\Validation\Rules\AbstractRule;
 class DateAfter extends AbstractRule{
-    protected $inclusive;
-	protected $before;
+    public $inclusive;
+	public $before;
     function __construct($before, $inclusive=false){
 		$this->before = $before;
 		$this->inclusive = $inclusive;

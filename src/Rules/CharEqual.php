@@ -2,7 +2,7 @@
 namespace FoxORM\Validate\Rules;
 use Respect\Validation\Rules\AbstractRule;
 class CharEqual extends AbstractRule{
-	protected $max;
+	public $max;
     function __construct($max){
 		$this->max = $max;
 	}
