@@ -7,12 +7,13 @@ class Validate{
 	function __construct(){
 		$this->factory = new Factory();
 		$this->factory->prependRulePrefix(__NAMESPACE__.'\\Rules');
+		//$this->factory->appendRulePrefix(__NAMESPACE__.'\\Rules');
 	}
 	function __call($method, $arguments){
 		return call_user_func_array([$this->createRule(),$method],$arguments);
 	}
-	function createRule(){
-		return new RuleSet($this->factory);
+	function createRule($ruleSet=null){
+		return new RuleSet($this,$ruleSet);
 	}
 	function getFactory(){
 		return $this->factory;
