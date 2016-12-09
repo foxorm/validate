@@ -1,6 +1,7 @@
 {
     "name": "foxorm/validate",
     "type": "library",
+    "description": "Pluginisable validation Rules and Filters",
     "require": {
         "respect/validation": "^1.1",
         "particle/filter": "^1.4"
