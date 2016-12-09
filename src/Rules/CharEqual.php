@@ -2,12 +2,12 @@
 namespace FoxORM\Validate\Rules;
 use Respect\Validation\Rules\AbstractRule;
 class CharEqual extends AbstractRule{
-	public $max;
-    function __construct($max){
-		$this->max = $max;
+	public $length;
+    function __construct($length){
+		$this->length = $length;
 	}
     function validate($v){
-		return $this->length($v)==$this->max;
+		return $this->length($v)==$this->length;
     }
     protected function length($v){
 		return mb_strlen($this->cleanString($v));
