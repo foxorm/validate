@@ -38,7 +38,15 @@ class RuleSet extends AllOf{
 			$mandatory = in_array(['required'],$rules);
 			foreach($rules as $ruleArray){
 				$name = array_shift($ruleArray);
-				$ruleObject = $this->buildRule($name, $ruleArray);
+				if(is_array($name)){
+					foreach($name as $nestedRule){
+						$ruleObject = $this->buildRule($name, $ruleArray);
+						$ruleArray = $ruleObject;
+					}
+				}
+				else{
+					$ruleObject = $this->buildRule($name, $ruleArray);
+				}
 				$rule = $this->buildRule($method, [$key,$ruleObject,$mandatory]);
 				$this->addRule($rule);
 			}
