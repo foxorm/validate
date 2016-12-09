@@ -2,6 +2,7 @@
 namespace FoxORM\Validate;
 use BadMethodCallException;
 use Particle\Filter\FilterResource as ParticleFilterResource;
+use ReflectionClass;
 class FilterResource extends ParticleFilterResource{
 	function __call($method, $args){
 		$filter = __NAMESPACE__.'\\Filters\\'.ucfirst($method);
