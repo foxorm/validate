@@ -5,7 +5,10 @@ class HtmlFilter extends FilterRule{
 	protected $tags = [];
 	protected $globalAttrs = [];
 	protected $attrs = [];
-	function __construct($tags,$globalAttrs=[],$attrs=[]){
+	function __construct($tags=[],$globalAttrs=[],$attrs=[]){
+		if(is_string($tags)){
+			$tags = explode('+',$tags);
+		}
 		$this->tags = array_unique(array_merge($this->tags,$tags,array_keys($this->attrs)));
 		$this->globalAttrs = array_unique(array_merge($this->globalAttrs,$globalAttrs));
 		$this->attrs = $attrs;
