@@ -2,7 +2,7 @@
 namespace FoxORM\Validate;
 use Respect\Validation\Factory;
 use FoxORM\Validate\RuleSet;
-class Validate{
+class Ruler{
 	protected $factory;
 	function __construct(){
 		$this->factory = new Factory();
