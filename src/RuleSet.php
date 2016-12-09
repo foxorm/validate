@@ -28,9 +28,6 @@ class RuleSet extends AllOf{
 	function not($method, $arguments){
 		return $this->__call('not',[$this->buildRule($method, $arguments)]);
 	}
-	function optional($method, $arguments){
-		return $this->__call('optional',[$this->buildRule($method, $arguments)]);
-	}
 	function addRuleSet($ruleSet){
 		foreach($ruleSet as $key=>$rules){
 			$method = strpos($key,'.')?'nestedKey':'key';
