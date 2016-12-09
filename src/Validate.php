@@ -9,10 +9,16 @@ class Validate{
 		$this->ruler = new Ruler();
 		$this->filter = new Filter();
 	}
-	function getRuler(){
+	function getRulerService(){
 		return $this->ruler;
 	}
-	function getFilter(){
+	function getFilterService(){
 		return $this->filter;
+	}
+	function createFilter(array $rules = []){
+		return $this->filter->createFilter($rules);
+	}
+	function createRules(array $rules = []){
+		return $this->ruler->createRules($rules);
 	}
 }
