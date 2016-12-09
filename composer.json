@@ -3,6 +3,7 @@
     "type": "library",
     "require": {
         "respect/validation": "^1.1",
+        "particle/filter": "^1.4"
     },
     "suggest": {
         "foxorm/gibberish-detector": "Determines if text contains gibberish"
