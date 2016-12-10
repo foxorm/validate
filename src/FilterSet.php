@@ -6,14 +6,12 @@ use FoxORM\Validate\StringParamTrait;
 class FilterSet extends Filter{
 	use StringParamTrait;
 	function mixedFilter($mixed){
-		if(is_object($mixed)){
-			$mixed = $this->recursiveObjectToArray($mixed);
-		}
+		$mixed = $this->recursiveObjectToArray($mixed);
 		return $this->filter($mixed);
 	}
-	private function recursiveObjectToArray($obj){
+	private function recursiveObjectToArray($mixed){
 		$array = [];
-		foreach($obj as $k=>$v){
+		foreach($mixed as $k=>$v){
 			$array[$k] = is_object($v)?$this->recursiveObjectToArray($v):$v;
 		}
 		return $array;
