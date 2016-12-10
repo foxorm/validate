@@ -29,7 +29,9 @@ class Validate{
 		}
 		else if(substr($method,0,4)=='rule'){
 			$call = substr($method,4);
-			return call_user_func_array([$this->ruler,$call],$arguments);
+			$value = array_pop($arguments);
+			$rule = call_user_func_array([$this->ruler,$call],$arguments);
+			return $rule->validate($value);
 		}
 		else{
 			throw new BadMethodCallException("Called validate \"$method\" doesn't exists");
