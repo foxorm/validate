@@ -23,7 +23,7 @@ class FilterSet extends Filter{
 				if(is_string($filterArray)){
 					$filterArray = $this->extractStringParam($filterArray);
 				}
-				$this->addFilter($key, $filterArray);
+				$this->addFilter($key=='*'?null:$key, $filterArray);
 			}
 		}
 	}
