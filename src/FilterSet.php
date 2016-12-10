@@ -3,11 +3,28 @@ namespace FoxORM\Validate;
 use Particle\Filter\Filter;
 use FoxORM\Validate\FilterResource;
 use FoxORM\Validate\StringParamTrait;
+use ArrayAccess;
 class FilterSet extends Filter{
 	use StringParamTrait;
+	function filterByReference($mixed){
+		$results = $this->mixedFilter($mixed);
+		$mixed = $this->recursiveArrayAssignObject($results,$mixed);
+		return $mixed;
+	}
 	function mixedFilter($mixed){
 		$mixed = $this->recursiveObjectToArray($mixed);
 		return $this->filter($mixed);
+	}
+	private function recursiveArrayAssignObject($array,$mixed){
+		foreach($array as $k=>$v){
+			if(is_array($mixed)||$mixed instanceof ArrayAccess){
+				$mixed[$k] = is_array($v)?$this->recursiveArrayAssignObject($v,$mixed[$k]):$v;
+			}
+			else{
+				$mixed->$k = is_array($v)?$this->recursiveArrayAssignObject($v,$mixed->$k):$v;
+			}
+		}
+		return $mixed;
 	}
 	private function recursiveObjectToArray($mixed){
 		$array = [];
