@@ -19,6 +19,6 @@ class Validate{
 		return $this->filter->createFilter($rules);
 	}
 	function createRules(array $rules = []){
-		return $this->ruler->createRules($rules);
+		return $this->ruler->createRule($rules);
 	}
 }
