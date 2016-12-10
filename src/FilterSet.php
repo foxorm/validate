@@ -5,6 +5,19 @@ use FoxORM\Validate\FilterResource;
 use FoxORM\Validate\StringParamTrait;
 class FilterSet extends Filter{
 	use StringParamTrait;
+	function mixedFilter($mixed){
+		if(is_object($mixed)){
+			$mixed = $this->recursiveObjectToArray($mixed);
+		}
+		return $this->filter($mixed);
+	}
+	private function recursiveObjectToArray($obj){
+		$array = [];
+		foreach($obj as $k=>$v){
+			$array[$k] = is_object($v)?$this->recursiveObjectToArray($v):$v;
+		}
+		return $array;
+	}
 	function getFilterResource($keys = null){
         return new FilterResource($this, $keys);
     }
