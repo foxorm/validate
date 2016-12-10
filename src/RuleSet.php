@@ -30,7 +30,6 @@ class RuleSet extends AllOf{
 	}
 	function addRuleSet($ruleSet){
 		foreach($ruleSet as $key=>$rules){
-			$method = strpos($key,'.')?'mixedKeyNested':'mixedKey';
 			if(is_string($rules)){
 				$rules = $this->extractStringParamArray($rules);
 			}
@@ -55,7 +54,7 @@ class RuleSet extends AllOf{
 				else{
 					$ruleObject = $this->buildRule($name, $ruleArray);
 				}
-				$rule = $this->buildRule($method, [$key,$ruleObject,$mandatory]);
+				$rule = $this->buildRule('keyNested', [$key,$ruleObject,$mandatory]);
 				$this->addRule($rule);
 			}
 		}
