@@ -30,7 +30,7 @@ class RuleSet extends AllOf{
 	}
 	function addRuleSet($ruleSet){
 		foreach($ruleSet as $key=>$rules){
-			$method = strpos($key,'.')?'nestedKey':'key';
+			$method = strpos($key,'.')?'keyNested':'key';
 			if(is_string($rules)){
 				$rules = $this->extractStringParamArray($rules);
 			}
