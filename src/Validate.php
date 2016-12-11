@@ -19,7 +19,7 @@ class Validate{
 	function createFilter(array $rules = []){
 		return $this->filter->createFilter($rules);
 	}
-	function createRules(array $rules = []){
+	function createRule(array $rules = []){
 		return $this->ruler->createRule($rules);
 	}
 	function __call($method,$arguments){
