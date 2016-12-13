@@ -1,10 +1,9 @@
 <?php
 namespace FoxORM\Validate;
-use Particle\Filter\Filter;
 use FoxORM\Validate\FilterResource;
 use FoxORM\Validate\StringParamTrait;
 use ArrayAccess;
-class FilterSet extends Filter{
+class FilterSet extends \Particle\Filter\Filter{
 	use StringParamTrait;
 	function filterByReference($mixed){
 		$results = $this->mixedFilter($mixed);
