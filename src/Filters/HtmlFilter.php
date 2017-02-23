@@ -5,13 +5,15 @@ class HtmlFilter extends FilterRule{
 	protected $tags = [];
 	protected $globalAttrs = [];
 	protected $attrs = [];
-	function __construct($tags=[],$globalAttrs=[],$attrs=[]){
+	protected $allowJavascriptHref;
+	function __construct($tags=[],$globalAttrs=[],$attrs=[],$allowJavascriptHref=false){
 		if(is_string($tags)){
 			$tags = explode('+',$tags);
 		}
 		$this->globalAttrs = array_unique(array_merge($this->globalAttrs,$globalAttrs));
 		$this->attrs = $attrs;
 		$this->tags = array_unique(array_merge($this->tags,$tags,array_keys($this->attrs)));
+		$this->allowJavascriptHref = $allowJavascriptHref;
 	}
 	function filter($str){
 		$total = strlen($str);
@@ -95,18 +97,22 @@ class HtmlFilter extends FilterRule{
 						$v = array_shift($x2);
 						$v = trim($v,'"');
 						$v = trim($v,"'");
-						if($v)
+						if($v){
 							$v = "=\"$v\"";
+						}
 						$ok = false;
 						if(($pos=strpos($k,'-'))!==false){
 							$key = substr($k,0,$pos+1).'*';
-							if(in_array($key,$allowed)||($this->globalAttrs&&in_array($key,$this->globalAttrs)))
+							if(in_array($key,$allowed)||($this->globalAttrs&&in_array($key,$this->globalAttrs))){
 								$ok = true;
+							}
 						}
-						if(in_array($k,$allowed)||($this->globalAttrs&&in_array($k,$this->globalAttrs)))
+						if(in_array($k,$allowed)||($this->globalAttrs&&in_array($k,$this->globalAttrs))){
 							$ok = true;
-						if($ok)
+						}
+						if($ok){
 							$attr .= ' '.$k.$v;
+						}
 					}
 					$nstr .= "<$tag$attr$e>";
 				}
