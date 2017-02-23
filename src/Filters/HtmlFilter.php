@@ -69,7 +69,25 @@ class HtmlFilter extends FilterRule{
 					if(!in_array($tag,$this->tags))
 						continue;
 					$allowed = isset($this->attrs[$tag])?$this->attrs[$tag]:[];
-					$x = explode(' ',$attr);
+					
+					$x = [];
+					$tt = strlen($attr);
+					$y = 0;
+					$sep = ' ';
+					$attrsnip = '';
+					for($y=0;$y<$tt;$y++){
+						$c2 = $attr[$y];
+						$attrsnip .= $c2;
+						if($c2==$sep){
+							$x[] = $attrsnip;
+							$attrsnip = '';
+							$sep = ' ';
+						}
+						elseif($sep==' '&&($c2=='"'||$c2=="'")){
+							$sep = $c2;
+						}
+					}
+					
 					$attr = '';
 					foreach($x as $_x){
 						$x2 = explode('=',$_x);
