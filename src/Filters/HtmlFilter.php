@@ -6,7 +6,9 @@ class HtmlFilter extends FilterRule{
 	protected $globalAttrs = [];
 	protected $attrs = [];
 	protected $preventJavascriptInjection;
-	function __construct($tags=[],$globalAttrs=[],$attrs=[],$preventJavascriptInjection=true){
+	//protected $allowComments;
+	//protected $allowCDATA;
+	function __construct($tags=[],$globalAttrs=[],$attrs=[],$preventJavascriptInjection=true/*,$allowComments=false,$allowCDATA=false*/){
 		if(is_string($tags)){
 			$tags = explode('+',$tags);
 		}
@@ -14,8 +16,19 @@ class HtmlFilter extends FilterRule{
 		$this->attrs = $attrs;
 		$this->tags = array_unique(array_merge($this->tags,$tags,array_keys($this->attrs)));
 		$this->preventJavascriptInjection = $preventJavascriptInjection;
+		
+		//auto disabled by parser
+		//$this->allowComments = $allowComments;
+		//$this->allowCDATA = $allowCDATA;
 	}
 	function filter($str){
+		//if(!$this->allowComments){
+			//$str = preg_replace('/<!--(.*)-->/Uis', '', $str);
+		//}
+		//if(!$this->allowCDATA){
+			//$str = preg_replace("/^<!\[CDATA\[(.*)\]\]>$/s", '', $str);
+		//}
+		
 		$total = strlen($str);
 		$nstr = '';
 		for($i=0;$i<$total;$i++){
@@ -126,13 +139,47 @@ class HtmlFilter extends FilterRule{
 		return $nstr;
 	}
 	function preventJavascriptInjection($tag,$k,$v){
+		//see http://heideri.ch/jso/
 		if(!$this->preventJavascriptInjection) return;
-		switch($tag.'['.$k.']'){
-			case 'a[href]':
+		if(substr($k,2)=='on'){
+			return true;
+		}
+		switch($k){
+			case 'form':
+			case 'formaction':
+			case 'autofocus':
+			case 'dirname':
+				return true;
+			break;
+			case 'href':
+			case 'poster':
+			case 'xlink:href':
 				if(substr(trim($v),0,11)=='javascript:'){
 					return true;
 				}				
 			break;
 		}
+		
+		switch($tag.'['.$k.']'){
+			/*
+			case 'a[href]':
+			case 'math[href]':
+			case 'math[xlink:href]':
+			case 'video[poster]':
+				if(substr(trim($v),0,11)=='javascript:'){
+					return true;
+				}
+			break;
+			*/
+			case 'link[rel]':
+				if(trim($v)=='import'){
+					return true;
+				}
+			break;
+			case 'iframe[srcdoc]':
+				return true;
+			break;
+		}
+		
 	}
 }
