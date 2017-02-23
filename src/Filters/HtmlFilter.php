@@ -5,15 +5,15 @@ class HtmlFilter extends FilterRule{
 	protected $tags = [];
 	protected $globalAttrs = [];
 	protected $attrs = [];
-	protected $allowJavascriptHref;
-	function __construct($tags=[],$globalAttrs=[],$attrs=[],$allowJavascriptHref=false){
+	protected $preventJavascriptInjection;
+	function __construct($tags=[],$globalAttrs=[],$attrs=[],$preventJavascriptInjection=true){
 		if(is_string($tags)){
 			$tags = explode('+',$tags);
 		}
 		$this->globalAttrs = array_unique(array_merge($this->globalAttrs,$globalAttrs));
 		$this->attrs = $attrs;
 		$this->tags = array_unique(array_merge($this->tags,$tags,array_keys($this->attrs)));
-		$this->allowJavascriptHref = $allowJavascriptHref;
+		$this->preventJavascriptInjection = $preventJavascriptInjection;
 	}
 	function filter($str){
 		$total = strlen($str);
@@ -111,6 +111,9 @@ class HtmlFilter extends FilterRule{
 							$ok = true;
 						}
 						if($ok){
+							if($this->preventJavascriptInjection($tag,$k,$v)){
+								continue;
+							}
 							$attr .= ' '.$k.$v;
 						}
 					}
@@ -121,5 +124,15 @@ class HtmlFilter extends FilterRule{
 				$nstr .= $c;
 		}
 		return $nstr;
+	}
+	function preventJavascriptInjection($tag,$k,$v){
+		if(!$this->preventJavascriptInjection) return;
+		switch($tag.'['.$k.']'){
+			case 'a[href]':
+				if(substr(trim($v),0,11)=='javascript:'){
+					return true;
+				}				
+			break;
+		}
 	}
 }
