@@ -107,7 +107,7 @@ class HtmlFilter extends FilterRule{
 					foreach($x as $_x){
 						$x2 = explode('=',$_x);
 						$k = array_shift($x2);
-						$v = array_shift($x2);
+						$v = implode('=',$x2);
 						$v = trim($v,'"');
 						$v = trim($v,"'");
 						if($v){
