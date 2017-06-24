@@ -5,181 +5,325 @@ class HtmlFilter extends FilterRule{
 	protected $tags = [];
 	protected $globalAttrs = [];
 	protected $attrs = [];
-	protected $preventJavascriptInjection;
-	//protected $allowComments;
-	//protected $allowCDATA;
-	function __construct($tags=[],$globalAttrs=[],$attrs=[],$preventJavascriptInjection=true/*,$allowComments=false,$allowCDATA=false*/){
+	function __construct($tags=[],$globalAttrs=[],$attrs=[],$preventJavascriptInjection=true){
 		if(is_string($tags)){
 			$tags = explode('+',$tags);
 		}
 		$this->globalAttrs = array_unique(array_merge($this->globalAttrs,$globalAttrs));
 		$this->attrs = $attrs;
 		$this->tags = array_unique(array_merge($this->tags,$tags,array_keys($this->attrs)));
-		$this->preventJavascriptInjection = $preventJavascriptInjection;
-		
-		//auto disabled by parser
-		//$this->allowComments = $allowComments;
-		//$this->allowCDATA = $allowCDATA;
 	}
 	function filter($str){
-		//if(!$this->allowComments){
-			//$str = preg_replace('/<!--(.*)-->/Uis', '', $str);
-		//}
-		//if(!$this->allowCDATA){
-			//$str = preg_replace("/^<!\[CDATA\[(.*)\]\]>$/s", '', $str);
-		//}
+		if(!isset($this->attrs['*'])){
+			$this->attrs['*'] = [];
+		}
+		foreach($this->globalAttrs as $k=>$v){
+			$this->attrs['*'][] = $v;
+		}
+		return static::htmlfilter($str, $attrs);
+	}
+	
+	protected static function htmlfilter($htmlUserInput, $allowedAttributesByTag=[]){
+	
+		$allowedAttributesForAllTags = [];
+		if(isset($allowedAttributesByTag['*'])){
+			$allowedAttributesForAllTags = $allowedAttributesByTag['*'];
+			unset($allowedAttributesByTag['*']);
+		}
 		
-		$total = strlen($str);
-		$nstr = '';
-		for($i=0;$i<$total;$i++){
-			$c = $str{$i};
-			if($c=='<'){
-				$tag = '';
-				while($c!='>'){
-					$c = $str{$i};
-					$tag .= $c;
-					$i++;
-					if($c=='='){
-						$sep = '';
-						while($sep!='"'&&$sep!="'"){
-							$sep = $str{$i};
-							if($sep!='"'&&$sep!="'"&&$sep!=' '){
-								$sep = ' ';
-								while($c!=$sep&&$c!='/'&&$c!='>'){
-									$c = $str{$i};
-									$tag .= $c;
-									$i++;
-								}
+		
+		$htmlUserInput = preg_replace('/<!--(.*)-->/Uis', '', $htmlUserInput); //remove comments
+		$htmlUserInput = preg_replace("/^<!\[CDATA\[(.*)\]\]>$/s", '', $htmlUserInput); //remove CDATA
+		
+		$htmlLength = strlen($htmlUserInput);
+		$securisedHtml = '';
+		
+		$state = 'PARSING';
+		$charContainer = '';
+		$quoteType = '';
+		
+		for($i=0;$i<$htmlLength;$i++){
+			$currentChar = $htmlUserInput{$i};
+			switch($currentChar){
+				case '<':
+					switch($state){
+						case 'PARSING':
+							$state = 'PARSING_OPENER';
+						case 'PARSING_OPENER':
+							$securisedHtml .= $charContainer;
+							$charContainer = '';
+						break;
+						break;
+						case 'ATTR_VALUE':
+							$charContainer .= $currentChar;
+						break;
+						default:
+							$securisedHtml .= $charContainer;
+							$charContainer = '';
+							$state = 'PARSING';
+							$i+=-1;
+						break;
+					}
+				break;
+				case '=':
+					switch($state){
+						case 'PARSING_OPENER':
+							if(!isset($htmlUserInput{$i+1}))
 								break;
+							$quote = $htmlUserInput{$i+1};
+							$y = $i+2;
+							$charContainer .= '='.$quote;
+							while(($ch=$htmlUserInput{$y++})!=$quote){
+								$charContainer .= $ch;
+								if(!isset($htmlUserInput{$y+1}))
+									break 2;
 							}
-							$i++;
-						}
-						if($sep!=' '){
-							$tag .= $sep;
-							while($c!=$sep){
-								$c = $str{$i};
-								$tag .= $c;
-								$i++;
+							$charContainer .= $quote;
+							$i = $y-1;
+						break;
+						default:
+							$charContainer .= $currentChar;
+						break;
+					}
+				break;
+				case '"':
+				case "'":
+					switch($state){
+						case 'PARSING_OPENER':
+							$state = 'ATTR_VALUE';
+							$quoteType = $currentChar;
+						break;
+						case 'ATTR_VALUE':
+							if($quoteType==$currentChar)
+								$state = 'PARSING_OPENER';
+						break;
+					}
+					$charContainer .= $currentChar;
+				break;
+				case '>':
+					switch($state){
+						case 'PARSING_OPENER':						
+							$state = 'PARSING';
+						case 'PARSING':						
+							$firstChar = isset($charContainer{0})?$charContainer{0}:'';
+							$myAttributes = [];
+							switch($firstChar){
+								case '/':
+									$tagName = substr($charContainer, 1);
+									if(!isset($allowedAttributesByTag[$tagName]))
+										break;
+									$securisedHtml .= "</$tagName>";
+								break;
+								default:
+									if ((strpos($charContainer, '"') !== false) || (strpos($charContainer, "'") !== false)){
+										$tagName = '';
+										for($y=0;$y<strlen($charContainer);$y++){
+											$currentChar = $charContainer{$y};
+											if (($currentChar == ' ') || ($currentChar == "\t") ||
+												($currentChar == "\n") || ($currentChar == "\r") ||
+												($currentChar == "\x0B")) {
+												$myAttributes = static::parseAttributes(substr($charContainer, $y));
+												break;
+											}
+											else
+												$tagName .= $currentChar;
+										}
+										if(!isset($allowedAttributesByTag[$tagName]))
+											break;
+										
+										$attrs = [];
+										$myAttributes = static::filterAttributes($tagName, $myAttributes);
+										foreach($myAttributes as $k=>$v){
+											if(!in_array($k, $allowedAttributesByTag[$tagName])&&!in_array($k, $allowedAttributesForAllTags))
+												continue;
+											$attrs[] = $k.'="'.$v.'"';
+										}
+										$attrs = implode(' ',$attrs);
+										
+										$securisedHtml .= '<'.$tagName;
+										if(!empty($attrs)){
+											$securisedHtml .= ' '.$attrs;
+										}
+										if(strrpos($charContainer, '/')==(strlen($charContainer)-1)){
+											$securisedHtml .= '/';
+										}
+										$securisedHtml .= '>';
+									}
+									else{
+										if(strpos($charContainer,' ')!==false){
+											$x = explode(' ',$charContainer);
+											$charContainer = array_shift($x);
+											foreach($x as $k)
+												if($k=='/')
+													$charContainer .= '/';
+												else
+													$myAttributes[] = $k;
+										}
+										
+										$tagName = $charContainer;
+										
+										if(!isset($allowedAttributesByTag[$tagName]))
+											break;
+											
+										$attrs = [];
+										$myAttributes = static::filterAttributes($tagName, $myAttributes);
+										foreach($myAttributes as $k=>$v){
+											$attrs[] = $k.'='.$v;
+										}
+										$attrs = implode(' ',$attrs);
+										$securisedHtml .= '<'.$tagName;
+										if(!empty($attrs)){
+											$securisedHtml .= ' '.$attrs;
+										}
+										if(strrpos($charContainer, '/')==(strlen($charContainer)-1)){
+											$securisedHtml .= '/';
+										}
+										$securisedHtml .= '>';									}
+								break;				
 							}
-							$i-=1;
-						}
+							$charContainer = '';
+						break;
+						default:
+							$charContainer .= $currentChar;
+						break;
 					}
-				}
-				$i-=1;
-				$tag = substr($tag,1,-1);
-				if(strpos($tag,'/')===0){
-					if(in_array(substr($tag,1),$this->tags))
-						$nstr .= "<$tag>";
-				}
-				else{
-					$e = strrpos($tag,'/')===strlen($tag)-1?'/':'';
-					if($e)
-						$tag = substr($tag,0,-1);
-					if(($pos=strpos($tag,' '))!==false){
-						$attr = substr($tag,$pos+1);
-						$tag = substr($tag,0,$pos);
-					}
-					else
-						$attr = '';
-					if(!in_array($tag,$this->tags))
-						continue;
-					$allowed = isset($this->attrs[$tag])?$this->attrs[$tag]:[];
-					
-					$x = [];
-					$tt = strlen($attr);
-					$y = 0;
-					$sep = ' ';
-					$attrsnip = '';
-					for($y=0;$y<$tt;$y++){
-						$c2 = $attr[$y];
-						$attrsnip .= $c2;
-						if($c2==$sep){
-							$x[] = $attrsnip;
-							$attrsnip = '';
-							$sep = ' ';
-						}
-						elseif($sep==' '&&($c2=='"'||$c2=="'")){
-							$sep = $c2;
-						}
-					}
-					
-					$attr = '';
-					foreach($x as $_x){
-						$x2 = explode('=',$_x);
-						$k = array_shift($x2);
-						$v = implode('=',$x2);
-						$v = trim($v,'"');
-						$v = trim($v,"'");
-						if($v){
-							$v = "=\"$v\"";
-						}
-						$ok = false;
-						if(($pos=strpos($k,'-'))!==false){
-							$key = substr($k,0,$pos+1).'*';
-							if(in_array($key,$allowed)||($this->globalAttrs&&in_array($key,$this->globalAttrs))){
-								$ok = true;
-							}
-						}
-						if(in_array($k,$allowed)||($this->globalAttrs&&in_array($k,$this->globalAttrs))){
-							$ok = true;
-						}
-						if($ok){
-							if($this->preventJavascriptInjection($tag,$k,$v)){
-								continue;
-							}
-							$attr .= ' '.$k.$v;
-						}
-					}
-					$nstr .= "<$tag$attr$e>";
-				}
+				break;
+				default:
+					$charContainer .= $currentChar;
+				break;
 			}
-			else
-				$nstr .= $c;
 		}
-		return $nstr;
+		$securisedHtml .= $charContainer;
+		
+		return $securisedHtml;
 	}
-	function preventJavascriptInjection($tag,$k,$v){
+
+
+	protected static function parseAttributes($attrText){
+		$attrArray = [];
+		$total = strlen($attrText);
+		$keyDump = '';
+		$valueDump = '';
+		$currentState = 'ATTR_NONE';
+		$quoteType = '';
+		$keyDumpI = 0;
+		for($i=0;$i<$total;$i++){	
+			$currentChar = $attrText{$i};
+			if($currentState=='ATTR_NONE'&&trim($currentChar))
+				$currentState = 'ATTR_KEY';
+			switch ($currentChar){
+				case '=':
+					if ($currentState == 'ATTR_VALUE')
+						$valueDump .= $currentChar;
+					else {
+						$currentState = 'ATTR_VALUE';
+						$quoteType = '';
+					}
+				break;
+				case '"':
+					if ($currentState == 'ATTR_VALUE') {
+						if ($quoteType=='')
+							$quoteType = '"';
+						elseif ($quoteType == $currentChar) {
+							$keyDump = trim($keyDump);
+							$tValueDump = trim($valueDump);
+							$attrArray[$keyDump] = $tValueDump||$tValueDump==='0'?$valueDump:'';
+							$keyDump = $valueDump = $quoteType = '';
+							$currentState = 'ATTR_NONE';
+						}
+						else
+							$valueDump .= $currentChar;
+					}
+					else{
+						$keyDump = $keyDumpI++;
+						$valueDump = '';
+						$currentState = 'ATTR_VALUE';
+						$quoteType = '"';
+					}
+				break;
+				case "'":
+					if ($currentState == 'ATTR_VALUE') {
+						if ($quoteType == '')
+							$quoteType = "'";
+						elseif ($quoteType == $currentChar){
+							$keyDump = trim($keyDump);
+							$tValueDump = trim($valueDump);
+							$attrArray[$keyDump] = $tValueDump||$tValueDump==='0'?$valueDump:'';
+							$keyDump = $valueDump = $quoteType = '';
+							$currentState = 'ATTR_NONE';
+						}
+						else
+							$valueDump .= $currentChar;
+					}
+					else{
+						$keyDump = $keyDumpI++;
+						$valueDump = '';
+						$currentState = 'ATTR_VALUE';
+						$quoteType = "'";
+					}
+				break;
+				case "\t":
+				case "\x0B":
+				case "\n":
+				case "\r":
+				case ' ':
+					if($currentState=='ATTR_KEY'){
+						$currentState = 'ATTR_NONE';
+						if($keyDump)
+							$attrArray[] = trim($keyDump);
+						$keyDump = $valueDump = $quoteType = '';
+					}
+					elseif($currentState=='ATTR_VALUE')
+						$valueDump .= $currentChar;
+				break;
+				default:
+					if ($currentState == 'ATTR_KEY')
+						$keyDump .= $currentChar;
+					else
+						$valueDump .= $currentChar;
+				break;
+			}
+		}
+		if(trim($keyDump))
+			$attrArray[] = trim($keyDump);
+		return $attrArray;
+	}
+
+	protected static function filterAttributes($tag,$attrsInput){
 		//see http://heideri.ch/jso/
-		if(!$this->preventJavascriptInjection) return;
-		if(substr($k,2)=='on'){
-			return true;
+		$attrs = [];
+		foreach($attrsInput as $k=>$v){
+			if(substr($k,0,2)=='on'){
+				continue;
+			}
+			switch($k){
+				case 'form':
+				case 'formaction':
+				case 'autofocus':
+				case 'dirname':
+					continue;
+				break;
+				case 'href':
+				case 'poster':
+				case 'xlink:href':
+					if(substr(trim($v),0,11)=='javascript:'){
+						continue 2;
+					}				
+				break;
+			}
+			switch($tag.'['.$k.']'){
+				case 'link[rel]':
+					if(trim($v)=='import'){
+						continue 2;
+					}
+				break;
+				case 'iframe[srcdoc]':
+					continue 2;
+				break;
+			}
+			$attrs[$k] = $v;
 		}
-		switch($k){
-			case 'form':
-			case 'formaction':
-			case 'autofocus':
-			case 'dirname':
-				return true;
-			break;
-			case 'href':
-			case 'poster':
-			case 'xlink:href':
-				if(substr(trim($v),0,11)=='javascript:'){
-					return true;
-				}				
-			break;
-		}
-		
-		switch($tag.'['.$k.']'){
-			/*
-			case 'a[href]':
-			case 'math[href]':
-			case 'math[xlink:href]':
-			case 'video[poster]':
-				if(substr(trim($v),0,11)=='javascript:'){
-					return true;
-				}
-			break;
-			*/
-			case 'link[rel]':
-				if(trim($v)=='import'){
-					return true;
-				}
-			break;
-			case 'iframe[srcdoc]':
-				return true;
-			break;
-		}
-		
-	}
+		return $attrs;
+	};
+
 }
