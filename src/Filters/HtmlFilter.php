@@ -324,6 +324,6 @@ class HtmlFilter extends FilterRule{
 			$attrs[$k] = $v;
 		}
 		return $attrs;
-	};
+	}
 
 }
