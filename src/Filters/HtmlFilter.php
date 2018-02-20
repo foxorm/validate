@@ -20,7 +20,7 @@ class HtmlFilter extends FilterRule{
 		foreach($this->globalAttrs as $k=>$v){
 			$this->attrs['*'][] = $v;
 		}
-		return static::htmlfilter($str, $attrs);
+		return static::htmlfilter($str, $this->attrs);
 	}
 	
 	protected static function htmlfilter($htmlUserInput, $allowedAttributesByTag=[]){
