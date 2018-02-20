@@ -4,7 +4,8 @@
     "description": "Pluginisable validation Rules and Filters",
     "require": {
         "respect/validation": "^1.1",
-        "particle/filter": "^1.4"
+        "particle/filter": "^1.4",
+        "lincanbin/white-html-filter": "dev-master"
     },
     "suggest": {
         "foxorm/gibberish-detector": "Determines if text contains gibberish"
